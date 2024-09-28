@@ -78,6 +78,8 @@ let bestScore = localStorage.getItem("bestScore") || 0;
 let gameOver = false;
 let currentLevel = 1;
 let maxLevels = 2;
+let lastTap = 0;
+
 
 window.onload = function() {
     board = document.getElementById("board");
@@ -97,6 +99,8 @@ window.onload = function() {
     board.addEventListener("mousemove", movePlayerWithMouse);
     board.addEventListener("touchstart", movePlayerWithTouch);
     board.addEventListener("touchmove", movePlayerWithTouch);
+    board.addEventListener('touchstart', detectDoubleTap);
+
 
     //create blocks
     createBlocksForCPU();
@@ -190,7 +194,7 @@ function update() {
     else if (ball.y + ball.height >= boardHeight) {
         
         context.font = "20px sans-serif";
-        context.fillText("Game Over: Press 'Space' to Restart", 80, 400);
+        context.fillText("Game Over: Press 'Space' or tap twice on the screen to Restart", 80, 400);
         checkBestScore();
         gameOver = true;
     }
@@ -323,7 +327,17 @@ function movePlayerWithTouch(e) {
 
     player.x = nextplayerX;
 }
+function detectDoubleTap(e) {
+    let currentTime = new Date().getTime();
+    let tapLength = currentTime - lastTap;
 
+    // Double tap detected if the time difference between two taps is less than 300ms
+    if (tapLength < 300 && gameOver) {
+        resetGame();  // Simulate space key restart
+    }
+
+    lastTap = currentTime;
+}
 
 function detectCollision(a, b) {
     return a.x < b.x + b.width &&   //a's top left corner doesn't reach b's top right corner
