@@ -315,14 +315,14 @@ function movePlayerWithTouch(e) {
     let touchX = e.touches[0].clientX - rect.left;
     let nextplayerX = touchX - player.width / 2;
 
-    // Move paddle instantly to the touch position
+    
     if (nextplayerX < 0) {
-        player.x = 0;
-    } else if (nextplayerX + player.width > boardWidth) {
-        player.x = boardWidth - player.width;
-    } else {
-        player.x = nextplayerX;
+        nextplayerX = 0;  // Prevents the player from going beyond the left edge
     }
+    if (nextplayerX + player.width > boardWidth) {
+        nextplayerX = boardWidth - player.width;  // Prevents the player from going beyond the right edge
+    }
+    player.x = nextplayerX;
 }
 
 
