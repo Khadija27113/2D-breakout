@@ -52,8 +52,8 @@ let player = {
 //ball
 let ballWidth = 10;
 let ballHeight = 10;
-let ballVelocityX = 3; 
-let ballVelocityY = 2;
+let ballVelocityX = 6; 
+let ballVelocityY = 4;
 
 let ball = {
     x : boardWidth/2,
@@ -76,6 +76,8 @@ let blockY = 60;
 let score = 0;
 let bestScore = localStorage.getItem("bestScore") || 0;
 let gameOver = false;
+let currentLevel = 1;
+let maxLevels = 2;
 
 window.onload = function() {
     board = document.getElementById("board");
@@ -93,6 +95,7 @@ window.onload = function() {
     requestAnimationFrame(update);
     document.addEventListener("keydown", movePlayer);
     board.addEventListener("mousemove", movePlayerWithMouse);
+    board.addEventListener("touchstart", movePlayerWithTouch);
     board.addEventListener("touchmove", movePlayerWithTouch);
 
     //create blocks
@@ -137,15 +140,15 @@ function updateScore() {
 
 function drawRoundedRect(context, x, y, width, height, radius) {
     context.beginPath();
-    context.moveTo(x + radius, y); // Move to the top-left corner, shifted by the radius
-    context.lineTo(x + width - radius, y); // Draw the top edge
-    context.quadraticCurveTo(x + width, y, x + width, y + radius); // Top-right corner
-    context.lineTo(x + width, y + height - radius); // Right edge
-    context.quadraticCurveTo(x + width, y + height, x + width - radius, y + height); // Bottom-right corner
-    context.lineTo(x + radius, y + height); // Bottom edge
-    context.quadraticCurveTo(x, y + height, x, y + height - radius); // Bottom-left corner
-    context.lineTo(x, y + radius); // Left edge
-    context.quadraticCurveTo(x, y, x + radius, y); // Top-left corner
+    context.moveTo(x + radius, y); 
+    context.lineTo(x + width - radius, y); 
+    context.quadraticCurveTo(x + width, y, x + width, y + radius); 
+    context.lineTo(x + width, y + height - radius); 
+    context.quadraticCurveTo(x + width, y + height, x + width - radius, y + height); 
+    context.lineTo(x + radius, y + height); 
+    context.quadraticCurveTo(x, y + height, x, y + height - radius); 
+    context.lineTo(x, y + radius); 
+    context.quadraticCurveTo(x, y, x + radius, y); 
     context.closePath();
     context.fill();
 }
@@ -171,22 +174,21 @@ function update() {
 
     //bounce the ball off player paddle
     if (topCollision(ball, player) || bottomCollision(ball, player)) {
-        ball.velocityY *= -1;   // flip y direction up or down
+        ball.velocityY *= -1;   
     }
     else if (leftCollision(ball, player) || rightCollision(ball,  player)) {
-        ball.velocityX *= -1;   // flip x direction left or right
+        ball.velocityX *= -1;   
     }
 
     if (ball.y <= 0) { 
-        // if ball touches top of canvas
-        ball.velocityY *= -1; //reverse direction
+        
+        ball.velocityY *= -1; 
     }
     else if (ball.x <= 0 || (ball.x + ball.width >= boardWidth)) {
-        // if ball touches left or right of canvas
-        ball.velocityX *= -1; //reverse direction
+        ball.velocityX *= -1; 
     }
     else if (ball.y + ball.height >= boardHeight) {
-        // if ball touches bottom of canvas
+        
         context.font = "20px sans-serif";
         context.fillText("Game Over: Press 'Space' to Restart", 80, 400);
         checkBestScore();
@@ -199,15 +201,15 @@ function update() {
         let block = blockArray[i];
         if (!block.break) {
             if (topCollision(ball, block) || bottomCollision(ball, block)) {
-                block.break = true;     // block is broken
-                ball.velocityY *= -1;   // flip y direction up or down
+                block.break = true;     
+                ball.velocityY *= -1;   
                 score += 100;
                 updateScore()
                 blockCount -= 1;
             }
             else if (leftCollision(ball, block) || rightCollision(ball, block)) {
-                block.break = true;     // block is broken
-                ball.velocityX *= -1;   // flip x direction left or right
+                block.break = true;     
+                ball.velocityX *= -1;   
                 score += 100;
                 updateScore()
                 blockCount -= 1;
@@ -221,14 +223,53 @@ function update() {
 
     //next level
     if (blockCount == 0) {
-        score += 100*blockRows*blockColumns; //bonus points :)
-        blockRows = Math.min(blockRows + 1, blockMaxRows);
-        createBlocks();
+        currentLevel++;
+        if (currentLevel > maxLevels) {
+            // Game completed
+            context.font = "20px sans-serif";
+            context.fillText("Congratulations! You finished the game!", 80, 400);
+            gameOver = true;
+        } else {
+            // Move to next level
+            context.font = "20px sans-serif";
+            context.fillText("Level " + currentLevel + " Start!", 80, 400);
+            nextLevel();
+        }
     }
+    
 
     //score
     context.font = "20px sans-serif";
     context.fillText(score, 10, 25);
+}
+function createBlocksForLevel2() {
+    blockArray = [];
+    for (let row = 0; row < 7; row++) {
+        for (let col = 0; col < 18; col++) {
+            let block = {
+                x: blockX + col * (blockWidth + blockPadding),
+                y: blockY + row * (blockHeight + blockPadding),
+                width: blockWidth,
+                height: blockHeight,
+                break: false
+            };
+            blockArray.push(block);
+        }
+    }
+    blockCount = blockArray.length;
+}
+function nextLevel() {
+   
+    ball.velocityX *= 1.2;  
+    ball.velocityY *= 1.2;
+
+    resetGame();
+    
+    if (currentLevel == 2) {
+        createBlocksForLevel2();  
+    } else {
+        createBlocksForCPU();     
+    }
 }
 
 function outOfBounds(xPosition) {
@@ -273,10 +314,17 @@ function movePlayerWithTouch(e) {
     let rect = board.getBoundingClientRect();
     let touchX = e.touches[0].clientX - rect.left;
     let nextplayerX = touchX - player.width / 2;
-    if (!outOfBounds(nextplayerX)) {
+
+    // Move paddle instantly to the touch position
+    if (nextplayerX < 0) {
+        player.x = 0;
+    } else if (nextplayerX + player.width > boardWidth) {
+        player.x = boardWidth - player.width;
+    } else {
         player.x = nextplayerX;
     }
 }
+
 
 function detectCollision(a, b) {
     return a.x < b.x + b.width &&   //a's top left corner doesn't reach b's top right corner
@@ -301,22 +349,7 @@ function rightCollision(ball, block) {
     return detectCollision(ball, block) && (block.x + block.width) >= ball.x;
 }
 
-function createBlocks() {
-    blockArray = []; //clear blockArray
-    for (let c = 0; c < blockColumns; c++) {
-        for (let r = 0; r < blockRows; r++) {
-            let block = {
-                x : blockX + c*blockWidth + c*10, //c*10 space 10 pixels apart columns
-                y : blockY + r*blockHeight + r*10, //r*10 space 10 pixels apart rows
-                width : blockWidth,
-                height : blockHeight,
-                break : false
-            }
-            blockArray.push(block);
-        }
-    }
-    blockCount = blockArray.length;
-}
+
 function checkBestScore() {
     if (score > bestScore) {
         bestScore = score; // Update best score
