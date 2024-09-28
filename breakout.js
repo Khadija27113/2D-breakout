@@ -311,17 +311,16 @@ function movePlayerWithMouse(e) {
 
 function movePlayerWithTouch(e) {
     if (gameOver) return;
-    let rect = board.getBoundingClientRect();
-    let touchX = e.touches[0].clientX - rect.left;
-    let nextplayerX = touchX - player.width / 2;
+    let touchPercentage = e.touches[0].clientX / window.innerWidth;
+    let nextplayerX = touchPercentage * boardWidth - player.width / 2;
 
-    
     if (nextplayerX < 0) {
-        nextplayerX = 0;  // Prevents the player from going beyond the left edge
+        nextplayerX = 0;
     }
     if (nextplayerX + player.width > boardWidth) {
-        nextplayerX = boardWidth - player.width;  // Prevents the player from going beyond the right edge
+        nextplayerX = boardWidth - player.width;
     }
+
     player.x = nextplayerX;
 }
 
