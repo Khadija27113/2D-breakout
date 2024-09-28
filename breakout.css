@@ -16,7 +16,6 @@ body {
     background-size: cover;
 }
 .game-container {
-    display: flex;
     text-align: center;
     background: #fff;
     padding: 20px;
