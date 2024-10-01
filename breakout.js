@@ -79,6 +79,7 @@ let gameOver = false;
 let currentLevel = 1;
 let maxLevels = 2;
 let lastTap = 0;
+let keys={}
 
 
 window.onload = function() {
@@ -95,8 +96,8 @@ window.onload = function() {
     document.getElementById("best-score-text").textContent = "Best Score: " + bestScore;
 
     requestAnimationFrame(update);
-    document.addEventListener("keydown", movePlayer);
-    board.addEventListener("mousemove", movePlayerWithMouse);
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keyup", handleKeyUp);    board.addEventListener("mousemove", movePlayerWithMouse);
     board.addEventListener("touchstart", movePlayerWithTouch);
     board.addEventListener("touchmove", movePlayerWithTouch);
     board.addEventListener('touchstart', detectDoubleTap);
@@ -164,6 +165,7 @@ function update() {
     if (gameOver) {
         return;
     }
+    updatePlayerPosition();
     context.clearRect(0, 0, board.width, board.height);
 
     // player
@@ -280,27 +282,30 @@ function outOfBounds(xPosition) {
     return (xPosition < 0 || xPosition + playerWidth > boardWidth);
 }
 
-function movePlayer(e) {
-    if (gameOver) {
-        if (e.code == "Space") {
-            resetGame();
-            console.log("RESET");
-        }
-        return;
+function handleKeyDown(e) {
+    if (gameOver && e.code === "Space") {
+        resetGame();
+        console.log("RESET");
     }
-    if (e.code == "ArrowLeft") {
-        // player.x -= player.velocityX;
-        let nextplayerX = player.x - player.velocityX;
-        if (!outOfBounds(nextplayerX)) {
-            player.x = nextplayerX;
-        }
+    keys[e.code] = true;  // Track pressed keys
+}
+
+function handleKeyUp(e) {
+    keys[e.code] = false; // Stop tracking when the key is released
+}
+function updatePlayerPosition() {
+    if (keys["ArrowLeft"]) {
+        player.x -= player.velocityX; // Move left
     }
-    else if (e.code == "ArrowRight") {
-        let nextplayerX = player.x + player.velocityX;
-        if (!outOfBounds(nextplayerX)) {
-            player.x = nextplayerX;
-        }
-        // player.x += player.velocityX;    
+    if (keys["ArrowRight"]) {
+        player.x += player.velocityX; // Move right
+    }
+
+    // Prevent the player from moving outside the board
+    if (player.x < 0) {
+        player.x = 0;
+    } else if (player.x + player.width > board.width) {
+        player.x = board.width - player.width;
     }
 }
 function movePlayerWithMouse(e) {
